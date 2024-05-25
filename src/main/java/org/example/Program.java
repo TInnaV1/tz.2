@@ -2,54 +2,52 @@ package org.example;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.util.Random;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class Program {
-    public static BigInteger[] readFile(String filename) throws IOException {
+    public static ArrayList<BigInteger> readFile(String filename) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(filename));
         String line = bufferedReader.readLine();
         bufferedReader.close();
 
         StringTokenizer tokenizer = new StringTokenizer(line);
-        BigInteger[] result = new BigInteger[tokenizer.countTokens()];
-        int i = 0;
+        ArrayList<BigInteger> result = new ArrayList<>();
         while (tokenizer.hasMoreTokens()) {
-            result[i++] = new BigInteger(tokenizer.nextToken());
+            result.add(new BigInteger(tokenizer.nextToken()));
         }
         return result;
     }
 
-    public static BigInteger _min(BigInteger[] result) {
-        BigInteger min = result[0];
-        for (int i = 1; i < result.length; i++) {
-            if (result[i].compareTo(min) < 0) min = result[i];
+    public static BigInteger min(ArrayList<BigInteger> dataInt) {
+        BigInteger min = dataInt.get(0);
+        for (int i = 1; i < dataInt.size(); i++) {
+            if (dataInt.get(i).compareTo(min) < 0) min = dataInt.get(i);
         }
         return min;
     }
 
-    public static BigInteger _max(BigInteger[] result) {
-        BigInteger max = result[0];
-        for (int i = 1; i < result.length; i++) {
-            if (result[i].compareTo(max) > 0) max = result[i];
+    public static BigInteger max(ArrayList<BigInteger> dataInt) {
+        BigInteger max = dataInt.get(0);
+        for (int i = 1; i < dataInt.size(); i++) {
+            if (dataInt.get(i).compareTo(max) > 0) max = dataInt.get(i);
         }
         return max;
     }
 
-    public static BigInteger _sum(BigInteger[] result) {
+    public static BigInteger sum(ArrayList<BigInteger> dataInt) {
         BigInteger sum = BigInteger.ZERO;
-        for (int i = 0; i < result.length; i++) {
-            sum = sum.add(result[i]);
+        for (BigInteger num : dataInt) {
+            sum = sum.add(num);
         }
         return sum;
     }
 
-    public static BigInteger _mult(BigInteger[] result) {
+    public static BigInteger mult(ArrayList<BigInteger> dataInt) {
         BigInteger mult = BigInteger.ONE;
-        for (int i = 0; i < result.length; i++) {
-            mult = mult.multiply(result[i]);
+        for (BigInteger num : dataInt) {
+            mult = mult.multiply(num);
         }
         return mult;
     }
-
 }
