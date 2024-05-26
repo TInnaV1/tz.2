@@ -6,6 +6,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -28,10 +29,10 @@ jobs:
             echo "Тесты не пройдены. Вот список упавших тестов:"
             grep -A1 "Failed tests:" test_results.txt | tail -n +2
           fi
-          
+
       - name: Send Telegram notification
         if: failure()
         run: |
-          echo "Тесты не пройдены. Вот список упавших тестов:" >> telegram_message.txt
+          echo "Тесты не пройдены. Вот список упавших тестов:" > telegram_message.txt
           grep -A1 "Failed tests:" test_results.txt | tail -n +2 >> telegram_message.txt
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$(cat telegram_message.txt)"
