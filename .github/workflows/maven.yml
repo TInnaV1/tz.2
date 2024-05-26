@@ -1,25 +1,13 @@
-name: Run Tests on Commit
-
-on:
-  push:
-    branches:
-      - master
-
+name: Run tests
+on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        distribution: [bionic, xenial] 
-
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          node-version: '14'
-
-      - name: Run tests
-        run: |
-          echo "Running tests on ${{ matrix.distribution }}"
+          distribution: 'temurin'
+          java-version: 17
+      - name: Install dependencies
