@@ -28,7 +28,7 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           args: все ок
 
-      - name: Notify on failure
+      - name: Notify on failure 
         if: ${{ steps.test.outcome != 'success' }}
         uses: appleboy/telegram-action@master
         with:
