@@ -29,8 +29,33 @@ jobs:
             grep -A1 "Failed tests:" test_results.txt | tail -n +2
             cp test_results.txt test_results_output.txt
           fi
-          
-      - name: Send Telegram notification
+
+      - name: Generate Test Report
         if: failure()
         run: |
-          curl -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@test_results_output.txt https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument
+          echo "Test failures detected. Generating report..."
+          mkdir -p test-reports
+          cp target/surefire-reports/*.xml test-reports/
+
+      - name: Send success message to Telegram
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: "Всё ок"
+
+      - name: Make failed test report
+        if: failure()
+        run: |
+          set +e
+          grep -E "<testcase|<failure" test-reports/*.xml | grep -B 1 "<failure" > failed-test-report.xml
+
+      - name: Send failure message to Telegram
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: "Тесты не пройдены. Непройденные тесты:"
+          document: failed-test-report.xml
