@@ -1,11 +1,14 @@
 name: Run tests
-on: [push]
+on:
+  push:
+    branches:
+      - master
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -17,21 +20,42 @@ jobs:
         run: mvn install
 
       - name: Run tests
-        id: test
-        run: mvn test
+        run: |
+          mvn test | tee test_results.txt
+          if grep -q "Tests run: 0, Failures: 0, Errors: 0, Skipped: 0" test_results.txt; then
+            echo "Тесты успешно пройдены. Все ок."
+          else
+            echo "Тесты не пройдены. Вот список упавших тестов:"
+            grep -A1 "Failed tests:" test_results.txt | tail -n +2
+            cp test_results.txt test_results_output.txt
+          fi
 
-      - name: Notify on success
-        if: ${{ steps.test.outcome == 'success' }}
+      - name: Generate Test Report
+        if: failure()
+        run: |
+          echo "Test failures detected. Generating report..."
+          mkdir -p test-reports
+          cp target/surefire-reports/*.xml test-reports/
+
+      - name: Send success message to Telegram
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: "Всё ок"
+
+      - name: Make failed test report
+        if: failure()
+        run: |
+          set +e
+          grep -E "<testcase|<failure" test-reports/*.xml | grep -B 1 "<failure" > failed-test-report.xml
+
+      - name: Send failure message to Telegram
+        if: failure()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: все ок
-
-      - name: Notify on failure 
-        if: ${{ steps.test.outcome != 'success' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: "Тесты не пройдены. Подробности: ${{ steps.test.outputs.tests_failed }}"
+          message: "Тесты не пройдены. Непройденные тесты:"
+          document: failed-test-report.xml
