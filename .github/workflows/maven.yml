@@ -1,45 +1,33 @@
-name: Run tests
+name: CI CD
+
 on:
   push:
     branches:
       - master
+
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 17
-
-      - name: Install dependencies
-        run: mvn install
-
-      - name: Run tests
-        id: test
-        run: |
-          test_output=$(mvn test)
-          test_result=$?
-          echo "::set-output name=test-output::$test_output"
-          if [ $test_result -ne 0 ]; then
-            echo "::set-output name=tests_failed::true"
-          fi
-      - name: Notify on success
-        if: ${{ steps.test.outcome == 'success' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: все ок
-
-      - name: Notify on failure
-        if: ${{ steps.test.outcome != 'success' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: "Тесты не пройдены. Подробности: ${{ steps.test.outputs.tests_failed }}"
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: '17'
+        
+    - name: Install dependencies
+      run: mvn install
+      
+    - name: Run tests
+      run: mvn test
+      
+    - name: Notify on failure
+      if: failure()
+      uses: crazy-max/telegram-action@v2
+      with:
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        message: 'Tests failed. Check the details.'
