@@ -19,4 +19,4 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: New 0.1.${{ github.run_id }} version publish
+          args: все ок
