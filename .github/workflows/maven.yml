@@ -1,8 +1,5 @@
 name: Run tests
-on:
-  push:
-    branches:
-      - master
+on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,20 +11,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 17 
 
       - name: Install dependencies
         run: mvn install
 
       - name: Run tests
         id: test
-        run: |
-          test_output=$(mvn test)
-          test_result=$?
-          echo "::set-output name=test-output::$test_output"
-          if [ $test_result -ne 0 ]; then
-            echo "::set-output name=tests_failed::true"
-          fi
+        run: mvn test
+
       - name: Notify on success
         if: ${{ steps.test.outcome == 'success' }}
         uses: appleboy/telegram-action@master
@@ -36,7 +28,7 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           args: все ок
 
-      - name: Notify on failure
+      - name: Notify on failure 
         if: ${{ steps.test.outcome != 'success' }}
         uses: appleboy/telegram-action@master
         with:
