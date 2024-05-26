@@ -3,40 +3,35 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
-      - run: mvn install
 
-      - name: Run tests and capture output
+      - name: Install dependencies
+        run: mvn install
+
+      - name: Run tests
         id: test
-        run: |
-          test_output=$(mvn test)
-          test_result=$?
-          echo "::set-output name=test-output::$test_output"
-          echo "::set-output name=test-result::$test_result"
-        
-      - name: Process test results
-        run: |
-          test_output=$TEST_OUTPUT
-          test_result=$TEST_RESULT
+        run: mvn test
 
-          if [ $test_result -eq 0 ]; then
-            message="все ок"
-          else
-            failed_tests=$(echo "$test_output" | grep -A1 "Failed tests:" | tail -n +2 | sed 's/\[ERROR]//')
-            message="Oops! Some tests failed. Failed tests: $failed_tests"
-          fi
-          echo "$message"
-        
-      - name: Send Telegram Notification
-        if: always()
+      - name: Notify on success
+        if: ${{ steps.test.outcome == 'success' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: "${{ steps.process-test-results.outputs.message }}"
+          args: все ок
+
+      - name: Notify on failure
+        if: ${{ steps.test.outcome != 'success' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          args: "Тесты не пройдены. Подробности: ${{ steps.test.outputs.tests_failed }}"
