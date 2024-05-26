@@ -21,14 +21,10 @@ jobs:
 
       - name: Run tests
         id: test
-        run: |
-          test_output=$(mvn test)
-          test_result=$?
-          echo "::set-output name=test-output::$test_output"
+        run: | 
+          set -e
+          mvn test || (echo "::set-output name=tests_failed::true" && exit 0)
 
-          if [ $test_result -ne 0 ]; then
-            echo "::set-output name=tests_failed::true"
-          fi
       - name: Notify on success
         if: ${{ steps.test.outcome == 'success' }}
         uses: appleboy/telegram-action@master
@@ -38,9 +34,12 @@ jobs:
           args: все ок
 
       - name: Notify on failure
-        if: ${{ steps.test.outcome != 'success' }}
+        if: ${{ steps.test.outcome == 'failure' }}
+        run: |
+          echo "Тесты не пройдены. Подробности:"
+          echo "${{ steps.test.outputs.tests_failed }}"
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: "Тесты не пройдены. Подробности: ${{ steps.test.outputs.tests_failed }}"
+          args: "Тесты не пройдены. Подробности см. в логах Actions"
