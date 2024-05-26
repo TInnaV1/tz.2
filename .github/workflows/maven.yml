@@ -1,18 +1,14 @@
-name: CI Test Workflow
-
+name: Run tests
 on:
   push:
     branches:
       - master
-  workflow_dispatch:
-
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -24,62 +20,26 @@ jobs:
         run: mvn install
 
       - name: Run tests
+        id: test
         run: |
-          mvn test | tee test_results.txt
-          if grep -q "Tests run: 0, Failures: 0, Errors: 0, Skipped: 0" test_results.txt; then
-            echo "Тесты успешно пройдены. Все ок."
-          else
-            echo "Тесты не пройдены. Вот список упавших тестов:"
-            grep -A1 "Failed tests:" test_results.txt | tail -n +2
+          test_output=$(mvn test)
+          test_result=$?
+          echo "::set-output name=test-output::$test_output"
+          if [ $test_result -ne 0 ]; then
+            echo "::set-output name=tests_failed::true"
           fi
-
-      - name: Send Telegram notification
-        if: failure()
-        run: |
-          echo "Тесты не пройдены. Вот список упавших тестов:" > telegram_message.txt
-          failed_tests=$(grep -A1 "Failed tests:" test_results.txt | tail -n +2)
-          echo "$failed_tests" >> telegram_message.txt
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Tasks failed: $(echo -e $failed_tests)"
-
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Notify on success
+        if: ${{ steps.test.outcome == 'success' }}
+        uses: appleboy/telegram-action@master
         with:
-          name: test-results
-          path: test_results.txt
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          args: все ок
 
-  report:
-    needs: test
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Check test status
-        id: check-status
-        run: |
-          if [ -f ./test_results.txt ]; then
-            echo "Test results found"
-            exit 0
-          else
-            echo "Test results not found"
-            exit 1
-          fi
-
-      - name: Set status badge
-        uses: actions/github-script@v5
+      - name: Notify on failure
+        if: ${{ steps.test.outcome != 'success' }}
+        uses: appleboy/telegram-action@master
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            var fs = require('fs');
-            var status = 'success';
-            if (fs.existsSync('./test_results.txt')) {
-              status = 'failure';
-            }
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: status,
-              target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Test status',
-              context: 'ci/test'
-            })
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          args: "Тесты не пройдены. Подробности: ${{ steps.test.outputs.tests_failed }}"
