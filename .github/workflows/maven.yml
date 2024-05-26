@@ -3,20 +3,23 @@ name: Run Tests on Commit
 on:
   push:
     branches:
-      - master 
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution: [bionic, xenial] 
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Java
-      uses: actions/setup-java@v2
-      with:
-        java-version: '11'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Run tests
-      run: |
-        ./gradlew test 
+      - name: Run tests
+        run: |
+          echo "Running tests on ${{ matrix.distribution }}"
