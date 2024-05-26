@@ -6,9 +6,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -20,26 +20,11 @@ jobs:
         run: mvn install
 
       - name: Run tests
-        id: test
-        run: | 
-          set -e
-          mvn test || (echo "::set-output name=tests_failed::true" && exit 0)
+        run: mvn test
 
-      - name: Notify on success
-        if: ${{ steps.test.outcome == 'success' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: все ок
-
-      - name: Notify on failure
-        if: ${{ steps.test.outcome == 'failure' }}
+      - name: Check test status and send Telegram notification
+        if: ${{ failure() }}
         run: |
-          echo "Тесты не пройдены. Подробности:"
-          echo "${{ steps.test.outputs.tests_failed }}"
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          args: "Тесты не пройдены. Подробности см. в логах Actions"
+          echo "Тесты не пройдены. Вот подробная информация:"
+          mvn surefire-report:report -Ddetail=true -DoutputDirectory=./target
+          cat ./target/site/surefire-report.html | curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Тесты не пройдены. Вот подробная информация: $(cat ./target/site/surefire-report.html)"
