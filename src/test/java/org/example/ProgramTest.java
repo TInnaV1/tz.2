@@ -75,7 +75,9 @@ public class ProgramTest {
     void resultEmpty() {
         System.out.println("Test Empty" + this);
         ProgramService programService = new ProgramService();
+
         List<String> results = programService.getAll();
+
         assertTrue(results.isEmpty());
     }
 
@@ -83,7 +85,9 @@ public class ProgramTest {
     @Test
     void testReadFileThrowsIOException() {
         String nonExistentFileName = "nonExistentFile.txt";
+
         assertThrows(IOException.class, () -> {
+
             Program.readFile(nonExistentFileName);
         });
     }
@@ -91,6 +95,7 @@ public class ProgramTest {
     @Test
     void timeOut() {
         Assertions.assertTimeout(Duration.ofMillis(100), () -> {
+
             return "result";
         });
     }
@@ -105,7 +110,6 @@ public class ProgramTest {
             Program.min(numbers);
             long end = System.nanoTime();
             total_min += (end - start);
-
             new File(name).delete();
         }
         return total_min / number_file;
@@ -116,7 +120,9 @@ public class ProgramTest {
         int number_file = 1000;
         int kol_vo = 10000;
         generate(number_file, kol_vo);
+
         long average = time_min(number_file, kol_vo);
+
         System.out.println("Average time min " + kol_vo + " : " + average);
     }
 
@@ -140,7 +146,9 @@ public class ProgramTest {
         int number_file = 1000;
         int kol_vo = 10000;
         generate(number_file, kol_vo);
+
         long average = time_max(number_file, kol_vo);
+
         System.out.println("Average time max " + kol_vo + " : " + average);
     }
 
@@ -164,7 +172,9 @@ public class ProgramTest {
         int number_file = 1000;
         int kol_vo = 10000;
         generate(number_file, kol_vo);
+
         long average = time_sum(number_file, kol_vo);
+
         System.out.println("Average time sum " + kol_vo + " : " + average);
     }
 
@@ -188,7 +198,9 @@ public class ProgramTest {
         int number_file = 1000;
         int kol_vo = 10000;
         generate(number_file, kol_vo);
+
         long average = time_mult(number_file, kol_vo);
+
         System.out.println("Average time mult " + kol_vo + " : " + average);
     }
 
