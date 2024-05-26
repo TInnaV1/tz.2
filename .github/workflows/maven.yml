@@ -25,15 +25,12 @@ jobs:
           if grep -q "Tests run: 0, Failures: 0, Errors: 0, Skipped: 0" test_results.txt; then
             echo "Тесты успешно пройдены. Все ок."
           else
-            echo "Тесты не пройдены. Вот список упавших тестов:"
-            grep -A1 "Failed tests:" test_results.txt | tail -n +2
+            echo "Тесты не пройдены. Вот список упавших тестов и ошибок:"
+            cat test_results.txt
           fi
 
       - name: Send Telegram notification and report if failure
         if: failure()
         run: |
-          echo "Тесты не пройдены. Вот список упавших тестов:" > telegram_message.txt
-          failed_tests=$(grep -A1 "Failed tests:" test_results.txt | tail -n +2)
-          echo "$failed_tests" >> telegram_message.txt
-          curl -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@telegram_message.txt https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Tasks failed: $(echo -e $failed_tests)"
+          curl -F chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -F document=@test_results.txt https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Tests failed. Full report has been sent."
