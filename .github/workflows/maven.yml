@@ -21,8 +21,14 @@ jobs:
 
       - name: Run tests
         id: test
-        run: mvn test || echo "::set-output name=tests_failed::true"
+        run: |
+          test_output=$(mvn test)
+          test_result=$?
+          echo "::set-output name=test-output::$test_output"
 
+          if [ $test_result -ne 0 ]; then
+            echo "::set-output name=tests_failed::true"
+          fi
       - name: Notify on success
         if: ${{ steps.test.outcome == 'success' }}
         uses: appleboy/telegram-action@master
