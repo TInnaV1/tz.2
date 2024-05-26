@@ -22,7 +22,7 @@ public class Program {
     public static BigInteger min(ArrayList<BigInteger> dataInt) {
         BigInteger min = dataInt.get(0);
         for (int i = 1; i < dataInt.size(); i++) {
-            if (dataInt.get(i).compareTo(min) < 0) min = dataInt.get(i);
+            if (dataInt.get(i).compareTo(min) > 0) min = dataInt.get(i);
         }
         return min;
     }

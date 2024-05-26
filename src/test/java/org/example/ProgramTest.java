@@ -34,7 +34,7 @@ public class ProgramTest {
     @Test
     void minTest() {
         System.out.println("Test _min" + this);
-        BigInteger expected = BigInteger.valueOf(3);
+        BigInteger expected = BigInteger.valueOf(2);
 
         BigInteger result = Program.min(dataIntTest);
 
